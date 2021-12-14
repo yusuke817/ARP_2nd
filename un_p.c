@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-#define MUL_SIZE 250000
+#define MAX_SIZE 250000
 
 int size;
 int array_size;
@@ -36,7 +36,7 @@ int main ()
 			}
 			else
 			{
-				array_size = size * MUL_SIZE;
+				array_size = size * MAX_SIZE;
 				data_array[array_size];
 				for (int i=0; i < array_size; i++)
 				{
