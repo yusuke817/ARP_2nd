@@ -11,6 +11,10 @@
 #include <time.h>
 #include <termios.h>
 
+#define MAX_SIZE 25000000
+
+float seconds = 0.0;
+
 int main(int argc, char* argv[]){
 
     int fd_w;
@@ -24,15 +28,15 @@ int main(int argc, char* argv[]){
         exit(1);
     }
 
-    printf("Insert number of elements of the array\n");
+    printf("Please input the number of elements of the array\n");
 
     int num;
 
     scanf("%d", & num);
 
-    if (num > 25000000){
+    if (num > MAX_SIZE){
 
-        printf("Insert a number smaller than 25000000");
+        printf("Insert a number smaller than 1250000\n");
 
         scanf("%d", & num);
 
@@ -42,22 +46,19 @@ int main(int argc, char* argv[]){
 
     if (id != 0){
 
-        printf("Producer!\n");
-
         int P[num];
         for(int i = 0; i < num; i++){
 
-            P[i] = 1 + rand()%100;
+            P[i] = 1 + rand()%num;
 
         }
         fd_w = open(argv[1], O_WRONLY);
-
-        time(&start);
-
-        printf("Time 0 : %ld\n", start);
+        
+        start = clock();
 
         write(fd_w, &start, sizeof(start));
-
+        
+        
         for(int i = 0; i < num; i++){
 
             write(u[1], &P[i], sizeof(P[i]));
@@ -66,30 +67,31 @@ int main(int argc, char* argv[]){
 
     else{
 
-        printf("Consumer!\n");
+        fd_r = open(argv[2], O_RDONLY);
 
-        fd_r = open(argv[2], O_WRONLY);
-
-        int P[num];
+        int C[num];
                     
         for(int i = 0; i < num; i++){
 
-            read(u[0], &P[i], sizeof(P[i]));
+            read(u[0], &C[i], sizeof(C[i]));
 
         }
-
-        time(&end);
-
-        printf("Time 1 : %ld\n", end);
+                
+    end = clock();
+    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+    printf("Time of execution : %f\n", seconds);    
 
         write(fd_r, &end, sizeof(end));
-
+        
     }
     close(fd_w);
     close(fd_r);
-
-    close(p[0]);
-    close(p[1]);
-
+    
+    
+    close(u[0]);
+    close(u[1]);
+    
+    //wait(NULL);
+    
     return 0;
 }
