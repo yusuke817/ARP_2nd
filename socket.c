@@ -23,8 +23,8 @@ void error(char *msg){
 int main(int argc, char* argv[]){
 
     int fd_np;
-    int fd_time0;
-    int fd_time1;
+    int fd_w;
+    int fd_r;
     int sockfd;
     int newsockfd;
     int portno;
@@ -35,8 +35,8 @@ int main(int argc, char* argv[]){
 
     struct hostent *server;
 
-    time_t seconds0;
-    time_t seconds1;
+    time_t start;
+    time_t end;
 
     printf("Insert number of elements of the array\n");
 
@@ -63,21 +63,21 @@ int main(int argc, char* argv[]){
 
         printf("Server!\n");
 
-        int A[num];
+        int P[num];
 
         for(int i = 0; i < num; i++){
 
-            A[i] = 1 + rand()%100;
+            P[i] = 1 + rand()%100;
 
         }
 
-        fd_time0 = open(argv[1], O_WRONLY);
+        fd_w = open(argv[1], O_WRONLY);
 
-        time(&seconds0);
+        time(&start);
 
-        printf("Time 0 : %ld\n", seconds0);
+        printf("Time 0 : %ld\n", start);
 
-        write(fd_time0, &seconds0, sizeof(seconds0));
+        write(fd_w, &start, sizeof(start));
 
         if(argc < 2){
 
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
 
         for(int i = 0; i < num; i++){
 
-            write(newsockfd, &A[i], sizeof(int));
+            write(newsockfd, &P[i], sizeof(int));
         }
     }
 
@@ -118,9 +118,9 @@ int main(int argc, char* argv[]){
 
         printf("Client!\n");
 
-        fd_time1 = open(argv[2], O_WRONLY);
+        fd_r = open(argv[2], O_WRONLY);
 
-        int B[num];
+        int C[num];
 
         if (argc < 3) {
 
@@ -154,18 +154,18 @@ int main(int argc, char* argv[]){
 
         for(int i = 0; i < num; i++){
 
-            read(sockfd, &B[i], sizeof(int));
+            read(sockfd, &C[i], sizeof(int));
         }
 
-        time(&seconds1);
+        time(&end);
 
-        printf("Time 1 : %ld\n", seconds1);
+        printf("Time 1 : %ld\n", end);
 
-        write(fd_time1, &seconds1, sizeof(seconds1));
+        write(fd_r, &end, sizeof(end));
     }
 
-    close(fd_time0);
-    close(fd_time1);
+    close(fd_w);
+    close(fd_r);
 
     close(newsockfd);
 
