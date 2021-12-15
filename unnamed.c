@@ -13,14 +13,14 @@
 
 int main(int argc, char* argv[]){
 
-    int fd_time0;
-    int fd_time1;
-    time_t seconds0;
-    time_t seconds1;
+    int fd_w;
+    int fd_r;
+    time_t start;
+    time_t end;
 
-    int p[2];
+    int u[2];
   
-    if (pipe(p) < 0){
+    if (pipe(u) < 0){
         exit(1);
     }
 
@@ -44,23 +44,23 @@ int main(int argc, char* argv[]){
 
         printf("Producer!\n");
 
-        int A[num];
+        int P[num];
         for(int i = 0; i < num; i++){
 
-            A[i] = 1 + rand()%100;
+            P[i] = 1 + rand()%100;
 
         }
-        fd_time0 = open(argv[1], O_WRONLY);
+        fd_w = open(argv[1], O_WRONLY);
 
-        time(&seconds0);
+        time(&start);
 
-        printf("Time 0 : %ld\n", seconds0);
+        printf("Time 0 : %ld\n", start);
 
-        write(fd_time0, &seconds0, sizeof(seconds0));
+        write(fd_w, &start, sizeof(start));
 
         for(int i = 0; i < num; i++){
 
-            write(p[1], &A[i], sizeof(A[i]));
+            write(p[1], &P[i], sizeof(P[i]));
         }
     }
 
@@ -68,25 +68,25 @@ int main(int argc, char* argv[]){
 
         printf("Consumer!\n");
 
-        fd_time1 = open(argv[2], O_WRONLY);
+        fd_r = open(argv[2], O_WRONLY);
 
-        int B[num];
+        int P[num];
                     
         for(int i = 0; i < num; i++){
 
-            read(p[0], &B[i], sizeof(B[i]));
+            read(p[0], &P[i], sizeof(P[i]));
 
         }
 
-        time(&seconds1);
+        time(&end);
 
-        printf("Time 1 : %ld\n", seconds1);
+        printf("Time 1 : %ld\n", end);
 
-        write(fd_time1, &seconds1, sizeof(seconds1));
+        write(fd_r, &end, sizeof(end));
 
     }
-    close(fd_time0);
-    close(fd_time1);
+    close(fd_w);
+    close(fd_r);
 
     close(p[0]);
     close(p[1]);
