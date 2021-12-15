@@ -11,7 +11,7 @@
 #include <time.h>
 #include <termios.h>
 
-#define MAX_SIZE 1250000
+#define MAX_SIZE 25000000
 
 float seconds = 0.0;
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
 
     if (num > MAX_SIZE){
 
-        printf("You can input less than 10000000");
+        printf("You can input less than 1250000\n");
 
 
     }
@@ -85,12 +85,10 @@ int main(int argc, char* argv[]){
 
     end = clock();
     float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-    
-    close(fd_named);
-
-    printf("Time of execution : %f\n", seconds);
-    
-    wait(NULL);
+    printf("Time of execution : %f\n", seconds); 
+       
+    close(fd_named);    
+    //wait(NULL);
 
     return 0;
 }
