@@ -60,7 +60,7 @@ int main(int argc, char* argv[]){
 
         for(int i = 0; i < num; i++){
 
-            write(p[1], &P[i], sizeof(P[i]));
+            write(u[1], &P[i], sizeof(P[i]));
         }
     }
 
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]){
                     
         for(int i = 0; i < num; i++){
 
-            read(p[0], &P[i], sizeof(P[i]));
+            read(u[0], &P[i], sizeof(P[i]));
 
         }
 
