@@ -11,13 +11,15 @@
 #include <time.h>
 #include <termios.h>
 
-#define MAX_SIZE 10000000
+#define MAX_SIZE 1250000
+
+float seconds = 0.0;
 
 int main(int argc, char* argv[]){
 
     int fd_named;
-    time_t seconds0;
-    time_t seconds1;
+    time_t start;
+    time_t end;
     
     mkfifo("/tmp/named", 0666);
 
@@ -44,13 +46,13 @@ int main(int argc, char* argv[]){
 
     if (id == 0){
 
-        printf("Producer!");
+        //printf("Start");
 
         int P[num];
 
         for(int i = 0; i < num; i++){
 
-            P[i] = 1 + rand()%100;
+            P[i] = 1 + rand()%num;
 
         }
 
@@ -58,17 +60,17 @@ int main(int argc, char* argv[]){
 
         // Stores time seconds
 
-        time(&seconds0);
-        
-        printf("Time 0 : %ld\n", seconds0);
+        start = clock();
 
         for(int i = 0; i < num; i++){
 
-            write(fd_named, &A[i], sizeof(A[i]));
+            write(fd_named, &P[i], sizeof(P[i]));
         }
+        
+        
     }
 
-    printf("Consumer!");
+    //printf("End");
         
     fd_named = open("/tmp/named", O_RDONLY);
 
@@ -81,16 +83,12 @@ int main(int argc, char* argv[]){
 
     }
 
-    // Stores time seconds
-
-    time(&seconds1);
+    end = clock();
+    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
     
-    printf("Time 1 : %ld\n", seconds1);
     close(fd_named);
 
-    time_t tot = seconds1 - seconds0;
-
-    printf("Time of execution : %ld\n", tot);
+    printf("Time of execution : %f\n", seconds);
     
     wait(NULL);
 
