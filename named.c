@@ -46,13 +46,13 @@ int main(int argc, char* argv[]){
 
     if (id == 0){
 
-        //printf("Start");
+        printf("Start");
 
         int P[num];
 
         for(int i = 0; i < num; i++){
 
-            P[i] = 1 + rand()%num;
+            P[i] = 1 + rand()%1000;
 
         }
 
