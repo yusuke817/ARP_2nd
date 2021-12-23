@@ -21,9 +21,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#define CYN "\e[0;36m"
-#define RESET "\e[0m"
-#define RED "\e[0;31m"
 #define ERROR_CHAR (-1)
 #define TRUE 1
 #define FALSE 0
@@ -32,28 +29,25 @@
 
 int main(int argc, char* argv[]){
 
-
-    int fd_w;
-    int fd_r;
-    int size;
+    int num;
     int i;
     int shmid;
     
     clock_t start;
     clock_t end;
 
-    printf(CYN "Enter the amount of kB you want to transfer (maximum quantity is 100000 kB)" RESET "\n");
+    printf("Please input the number of elements of the array\n");
 
-    scanf("%d", & size);
+    scanf("%d", & num);
 
-    while (size > 100000){
+    while (num > 100000){
 
-        printf(RED "ENTER AN AMOUNT OF KB LESS THAN 10000" RESET "\n");
+        printf("ENTER AN AMOUNT OF KB LESS THAN 10000" "\n");
 
-        scanf("%d", & size);
+        scanf("%d", & num);
     }
 
-    int num = size / 0.004;
+    //int num = size / 0.004;
 
     typedef struct{
 
@@ -100,15 +94,9 @@ int main(int argc, char* argv[]){
 
         /* this is the producer process */
 
-        fd_w = open(argv[1], O_WRONLY);
-
         start = clock();
 
-        double time_taken0 =(double) start / CLOCKS_PER_SEC;
-
-        printf("Time 0 : %f\n", time_taken0);
-
-        write(fd_w, &time_taken0, sizeof(time_taken0));
+        //double time_taken0 =(double) start / CLOCKS_PER_SEC;
 
         int a = 0;
 
@@ -143,30 +131,25 @@ int main(int argc, char* argv[]){
             sem_post(&ptr->empty);
         }
 
-        fd_r = open(argv[2], O_WRONLY);
+        //fd_r = open(argv[2], O_WRONLY);
 
         end = clock();
-
-        double time_taken1 =(double) end / CLOCKS_PER_SEC;
-
-        printf("Time 1 : %f\n", time_taken1);
-
-        write(fd_r, &time_taken1, sizeof(time_taken1));
+        //float seconds = (float)(end - start);
+        float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+    	printf("Time of execution : %f\n", seconds); 
           
     }
 
     sem_destroy(&ptr->empty);
     sem_destroy(&ptr->full);
     
-    /* detach the shared memory and deallocate the memory segment */
     
     shmdt(&ptr);
     shmctl(shmid, IPC_RMID, 0);
 
-    close(fd_w);
-    close(fd_r);
+    //close(fd_w);
+    //close(fd_r);
 
-    /* finally, close the signature file */
 
     return 0;
 }
