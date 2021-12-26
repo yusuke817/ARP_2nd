@@ -98,11 +98,11 @@ int main(int argc, char* argv[]){
 
         //double time_taken0 =(double) start / CLOCKS_PER_SEC;
 
-        int a = 0;
+        int p = 0;
 
-        while(a < num){
+        while(p < num){
 
-            a++;
+            p++;
 
             sem_wait(&ptr->empty);
 
@@ -117,11 +117,11 @@ int main(int argc, char* argv[]){
         
         /* this is the consumer process */
         
-        int b;
+        int c;
 
-        while (b < num){
+        while (c < num){
 
-            b++;
+            c++;
 
             sem_wait(&ptr->full);
 
@@ -132,9 +132,11 @@ int main(int argc, char* argv[]){
         }
 
         //fd_r = open(argv[2], O_WRONLY);
-
+        
         end = clock();
+
         //float seconds = (float)(end - start);
+        //float seconds = (float)(start - end) / CLOCKS_PER_SEC;
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
     	printf("Time of execution : %f\n", seconds); 
           
