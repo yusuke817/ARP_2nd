@@ -15,11 +15,14 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/uio.h>
+//#include <iostream>
+#include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
+//using namespace std;
 
 #define ERROR_CHAR (-1)
 #define TRUE 1
@@ -30,6 +33,7 @@
 int main(int argc, char* argv[]){
 
     int num;
+    int size;
     int i;
     int shmid;
     
@@ -61,10 +65,12 @@ int main(int argc, char* argv[]){
     } Buffer;
 
     Buffer *ptr;
+    
+    key_t key = ftok("shmfile",65);
 
     /* shmid is the id of the shared memory address for our buffer */
 
-    shmid = shmget(IPC_PRIVATE, sizeof(ptr->file_path), IPC_CREAT | 0666);
+    shmid = shmget(key, sizeof(ptr->file_path), IPC_CREAT | 0666);
 
     /* get a pointer to our buffer in shared memory */
 
@@ -93,6 +99,8 @@ int main(int argc, char* argv[]){
     if (id != 0){
 
         /* this is the producer process */
+        
+        //printf("prod\n");
 
         start = clock();
 
@@ -116,6 +124,13 @@ int main(int argc, char* argv[]){
     else{
         
         /* this is the consumer process */
+            //printf("cons\n");
+        
+	    key_t key = ftok("shmfile",65);
+
+	    /* shmid is the id of the shared memory address for our buffer */
+
+	    shmid = shmget(key, sizeof(ptr->file_path), IPC_CREAT | 0666);
         
         int c;
 
@@ -147,7 +162,7 @@ int main(int argc, char* argv[]){
     
     
     shmdt(&ptr);
-    shmctl(shmid, IPC_RMID, 0);
+    shmctl(shmid, IPC_RMID, NULL);
 
     //close(fd_w);
     //close(fd_r);
