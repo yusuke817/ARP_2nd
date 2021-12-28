@@ -15,47 +15,64 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/uio.h>
-//#include <iostream>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
-//using namespace std;
-
-#define ERROR_CHAR (-1)
-#define TRUE 1
-#define FALSE 0
-#define _SVID_SOURCE
-#define SIZE 2000000
 
 int main(int argc, char* argv[]){
 
-    int num;
-    int size;
+    int num=10;
+    int sizea = 0;
+    int sizeb = 0;
+    int sizecb = 0;
     int i;
     int shmid;
     
     clock_t start;
     clock_t end;
 
-    printf("Please input the number of elements of the array\n");
+    printf("Please input the size of producer buffer\n");
 
-    scanf("%d", & num);
+    scanf("%d", & sizea);
 
-    while (num > 100000){
+    printf("Please input the size of consumer buffer\nwhich should be smaller than the size of producer buffer\n");
 
-        printf("ENTER AN AMOUNT OF KB LESS THAN 10000" "\n");
+    scanf("%d", & sizeb);
 
-        scanf("%d", & num);
-    }
+    printf("Please input the size of circular buffer\nwhich should be equal or smaller than the size of other two buffers\n");
 
-    //int num = size / 0.004;
+    scanf("%d", & sizecb);
+
+     if (sizea > 100000000 || sizeb > 100000000 || sizecb > 100000000 ){
+
+         printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
+         exit(-1);
+     }
+
+     if (sizea < 1 || sizeb < 1 || sizecb < 1){
+
+         printf("ENTER positive values\n");
+         exit(-1);
+     }
+
+     if (sizeb > sizea){
+
+         printf("the size of consumer buffer should be equal or smaller than the size of producer buffer\n");
+         exit(-1);
+     }
+
+     if (sizecb > sizea || sizecb > sizeb){
+
+         printf("sizecb should be smaller than the size of other two buffers\n");
+         exit(-1);
+     }
 
     typedef struct{
 
-        char file_path[SIZE];
+        char data_cb[sizecb];
         int in;
         int out;
         sem_t full;
@@ -69,9 +86,10 @@ int main(int argc, char* argv[]){
     key_t key = ftok("shmfile",65);
 
     /* shmid is the id of the shared memory address for our buffer */
+    shmid = shmget(IPC_PRIVATE, sizeof(ptr->data_cb), IPC_CREAT | 0666);
 
-    shmid = shmget(key, sizeof(ptr->file_path), IPC_CREAT | 0666);
-
+    /*shmid = shmget(key, sizeof(ptr->buffer_data), IPC_CREAT | 0666);*/
+    
     /* get a pointer to our buffer in shared memory */
 
     ptr = (Buffer*) shmat(shmid, NULL, 0);
@@ -81,12 +99,10 @@ int main(int argc, char* argv[]){
     ptr->in = 0;
     ptr->out = 0;
 
-    /* initialise our semaphores (2nd param 1 means shared betweeen processes */
+    /* initialise our semaphores */
 
-    sem_init(&ptr->empty, 1, SIZE);
+    sem_init(&ptr->empty, 1, sizecb);
     sem_init(&ptr->full, 1, 0);
-
-    // fork
 
     int id = fork();
 
@@ -95,78 +111,88 @@ int main(int argc, char* argv[]){
         printf("Error forking...\n");
         exit(1);
     }
+        start = clock();
 
     if (id != 0){
 
         /* this is the producer process */
-        
-        //printf("prod\n");
-
-        start = clock();
-
-        //double time_taken0 =(double) start / CLOCKS_PER_SEC;
 
         int p = 0;
+        char data_a[sizea];
 
-        while(p < num){
+        for(int j=0; j<sizea; j++){
+        data_a[j] = 1 + rand()%100;    
+        }
 
-            p++;
+        while(p < sizea/sizecb){
 
             sem_wait(&ptr->empty);
 
-            ptr->file_path[ptr->in] = 1 + rand()%100;; 
-            ptr->in = (ptr->in + 1)%SIZE;
+            for(int j=0; j<sizecb; j++){
+                if(sizea<j+p*sizecb){
+                    ptr->data_cb[j]= data_a[j+p*sizecb]; 
+                }
+
+                else{
+                    ptr->data_cb[j]= 0;
+                }
+            //ptr->in = (ptr->in + 1)%sizecb;                
+            }            
+
+            p++;
 
             sem_post(&ptr->full);
         }
     }
 
     else{
-        
-        /* this is the consumer process */
-            //printf("cons\n");
+        //printf("Child starting\n"); 
         
 	    key_t key = ftok("shmfile",65);
 
 	    /* shmid is the id of the shared memory address for our buffer */
 
-	    shmid = shmget(key, sizeof(ptr->file_path), IPC_CREAT | 0666);
+	    shmid = shmget(key, sizeof(ptr->data_cb), IPC_CREAT | 0666);
+        char data_b[sizeb];
+        int pos = 0;
         
-        int c;
+        int c=0;
 
-        while (c < num){
-
-            c++;
+        while (c < sizeb/sizecb){
 
             sem_wait(&ptr->full);
 
-            int h = ptr->file_path[ptr->out];
-            ptr->out = (ptr->out + 1)%SIZE;
+            for(int j=0; j<sizecb; j++){
+
+                if(sizeb < pos){
+                    int h =ptr->data_cb[j];
+                    data_b[pos++]=h; 
+                }
+
+                else{
+                    break;
+                }
+               
+            }            
+
+            c++;
 
             sem_post(&ptr->empty);
         }
-
-        //fd_r = open(argv[2], O_WRONLY);
         
         end = clock();
 
-        //float seconds = (float)(end - start);
-        //float seconds = (float)(start - end) / CLOCKS_PER_SEC;
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
     	printf("Time of execution : %f\n", seconds); 
           
     }
+    printf("stopping");
 
     sem_destroy(&ptr->empty);
     sem_destroy(&ptr->full);
-    
-    
+        
     shmdt(&ptr);
     shmctl(shmid, IPC_RMID, NULL);
-
-    //close(fd_w);
-    //close(fd_r);
-
 
     return 0;
 }
