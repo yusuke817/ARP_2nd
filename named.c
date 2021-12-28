@@ -11,31 +11,30 @@
 #include <time.h>
 #include <termios.h>
 
-float seconds = 0.0;
-
 int main(int argc, char *argv[])
 {
-
+    // Initialize the file descriptor
     int fd_named;
-    //int sizea = 0;
-    //int sizeb = 0;
+    // set the clock
     clock_t start;
     clock_t end;
-
+    // create the named pipe
     mkfifo("/tmp/named", 0666);
-    printf("Please input the number of elements of the array\n");
+    // user can decide the bytes of the data
+    printf("Please input the bytes of transmitted data\n");
 
     int num;
 
     scanf("%d", &num);
 
+    // 100mb is maximum size
     if (num > 100000000)
     {
 
         printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
         exit(-1);
     }
-
+    //the amount of data should be positive
     if (num < 1)
     {
 
@@ -43,9 +42,8 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    // with fork(), the consumer and the producer are not separated into 2 parts
     int id = fork();
-
-    //printf("Start");
 
     if (id == -1)
     {
@@ -54,46 +52,39 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //stop-watch begins
     start = clock();
 
     if (id == 0)
     {
-
-        //printf("Start");
-
-        //char P[sizea];
+        //child process plays a role of producer P
+        // Dynamic memory which is malloc is used here to accept big amount of data
         char *P = (char *)malloc(num);
-
-        //for (int i = 0; i < sizea; i++)
-        //{
-
-        //P[i] = 1 + rand() % 1000;
-        //}
-
+        //open the pipe for writing the data
         fd_named = open("/tmp/named", O_WRONLY);
-
-        // Stores time seconds
-
+        //writing the data for the consumer
         write(fd_named, P, num);
+        //release the momory occupied with malloc
         free(P);
     }
 
     else
     {
-        //printf("End");
-
+        //parent process plays a role of consumer C
+        //open the pipe for readng the data
         fd_named = open("/tmp/named", O_RDONLY);
-
-        //char C[sizeb];
+        // Dynamic memory which is malloc is used here to accept big amount of data
         char *C = (char *)malloc(num);
-
+        //reading the data from the producer
         read(fd_named, C, num);
-
+        //stop-watch finishes
         end = clock();
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        //printimg the calculation time
         printf("Time of execution : %f\n", seconds);
-
+        //close the pipe
         close(fd_named);
+        //release the momory occupied with malloc
         free(C);
         return 0;
     }
