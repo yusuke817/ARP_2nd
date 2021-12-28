@@ -15,7 +15,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define MAX_SIZE 25000000
+#define MAX_SIZE 100000000
 
 void error(char *msg)
 {
@@ -56,12 +56,18 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if (num > 25000000)
+    if (num > 100000000)
     {
 
-        printf("You can input less than 25000000");
+        printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
+        exit(-1);
+    }
 
-        scanf("%d", &num);
+    if (num < 1)
+    {
+
+        printf("ENTER positive values\n");
+        exit(-1);
     }
 
     int id = fork();
@@ -95,7 +101,9 @@ int main(int argc, char *argv[])
         //if (i>255)
         //j = i%255;
         //char buffer[j];
-        char buffer[256];
+        //char buffer[256];
+
+        char *buffer = (char *)malloc(num);
 
         //circular buffer infinite
 
@@ -133,6 +141,8 @@ int main(int argc, char *argv[])
         n = write(newsockfd, "I got your message", 18);
         if (n < 0)
             error("ERROR writing to socket");
+
+        free(buffer);
     }
 
     else
@@ -144,7 +154,8 @@ int main(int argc, char *argv[])
 
         //int C[num];
 
-        char buffer[256];
+        //char buffer[256];
+        char *buffer = (char *)malloc(num);
 
         if (argc < 1)
         {
@@ -207,12 +218,12 @@ int main(int argc, char *argv[])
         printf("Time of execution : %f\n", seconds);
 
         //write(fd_r, &end, sizeof(end));
+        free(buffer);
     }
 
     //close(fd_w);
     //close(fd_r);
 
     //close(newsockfd);
-
     return 0;
 }
