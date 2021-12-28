@@ -15,8 +15,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define MAX_SIZE 100000000
-
 void error(char *msg)
 {
 
@@ -26,7 +24,7 @@ void error(char *msg)
 
 int main(int argc, char *argv[])
 {
-
+    //initialize each file descriptors
     int fd_w;
     int fd_r;
     int sockfd;
