@@ -11,11 +11,12 @@
 #include <time.h>
 #include <termios.h>
 
-#define MAX_SIZE 25000000
+#define MAX_SIZE 100000000
 
 float seconds = 0.0;
 
-int main(int argc, char* argv[]){
+int main(int argc, char *argv[])
+{
 
     int fd_w;
     int fd_r;
@@ -23,8 +24,9 @@ int main(int argc, char* argv[]){
     time_t end;
 
     int u[2];
-  
-    if (pipe(u) < 0){
+
+    if (pipe(u) < 0)
+    {
         exit(1);
     }
 
@@ -32,66 +34,83 @@ int main(int argc, char* argv[]){
 
     int num;
 
-    scanf("%d", & num);
+    scanf("%d", &num);
 
-    if (num > MAX_SIZE){
+    if (num > 100000000)
+    {
 
-        printf("Insert a number smaller than 1250000\n");
+        printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
+        exit(-1);
+    }
 
-        scanf("%d", & num);
+    if (num < 1)
+    {
 
+        printf("ENTER positive values\n");
+        exit(-1);
     }
 
     int id = fork();
 
-    if (id != 0){
+    if (id == -1)
+    {
 
-        int P[num];
-        for(int i = 0; i < num; i++){
-
-            P[i] = 1 + rand()%num;
-
-        }
-        fd_w = open(argv[1], O_WRONLY);
-        
-        start = clock();
-
-        write(fd_w, &start, sizeof(start));
-        
-        
-        for(int i = 0; i < num; i++){
-
-            write(u[1], &P[i], sizeof(P[i]));
-        }
+        printf("Error \n");
+        exit(1);
     }
 
-    else{
+    start = clock();
+
+    if (id != 0)
+    {
+        char *P = (char *)malloc(num);
+
+        // int P[num];
+        // for (int i = 0; i < num; i++)
+        // {
+
+        //     P[i] = 1 + rand() % num;
+        // }
+        fd_w = open(argv[1], O_WRONLY);
+
+        write(fd_w, &start, sizeof(start));
+
+        //for (int i = 0; i < num; i++)
+        //{
+
+        write(u[1], P, num);
+        free(P);
+        //}
+    }
+
+    else
+    {
 
         fd_r = open(argv[2], O_RDONLY);
 
-        int C[num];
-                    
-        for(int i = 0; i < num; i++){
+        char *C = (char *)malloc(num);
 
-            read(u[0], &C[i], sizeof(C[i]));
+        // for (int i = 0; i < num; i++)
+        // {
 
-        }
-                
-    end = clock();
-    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-    printf("Time of execution : %f\n", seconds);    
+        read(u[0], C, num);
+
+        // }
+
+        end = clock();
+        float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        printf("Time of execution : %f\n", seconds);
 
         write(fd_r, &end, sizeof(end));
-        
+        free(C);
     }
     close(fd_w);
     close(fd_r);
-    
-    
+
     close(u[0]);
     close(u[1]);
-    
+
     //wait(NULL);
-    
+
     return 0;
 }
