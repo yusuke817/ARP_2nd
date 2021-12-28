@@ -17,38 +17,29 @@ int main(int argc, char *argv[])
 {
 
     int fd_named;
-    int sizea = 0;
-    int sizeb = 0;
+    //int sizea = 0;
+    //int sizeb = 0;
     clock_t start;
     clock_t end;
 
     mkfifo("/tmp/named", 0666);
-    printf("Please input the size of producer buffer\n");
+    printf("Please input the number of elements of the array\n");
 
-    scanf("%d", &sizea);
+    int num;
 
-    printf("Please input the size of consumer buffer\nwhich should be smaller than the size of producer buffer\n");
+    scanf("%d", &num);
 
-    scanf("%d", &sizeb);
-
-    if (sizea > 100000000 || sizeb > 100000000)
+    if (num > 100000000)
     {
 
         printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
         exit(-1);
     }
 
-    if (sizea < 1 || sizeb < 1)
+    if (num < 1)
     {
 
         printf("ENTER positive values\n");
-        exit(-1);
-    }
-
-    if (sizeb > sizea)
-    {
-
-        printf("the size of consumer buffer should be equal or smaller than the size of producer buffer\n");
         exit(-1);
     }
 
@@ -71,7 +62,7 @@ int main(int argc, char *argv[])
         //printf("Start");
 
         //char P[sizea];
-        char *P = (char *)malloc(sizea);
+        char *P = (char *)malloc(num);
 
         //for (int i = 0; i < sizea; i++)
         //{
@@ -83,7 +74,7 @@ int main(int argc, char *argv[])
 
         // Stores time seconds
 
-        write(fd_named, P, sizea);
+        write(fd_named, P, num);
         free(P);
     }
 
@@ -94,9 +85,9 @@ int main(int argc, char *argv[])
         fd_named = open("/tmp/named", O_RDONLY);
 
         //char C[sizeb];
-        char *C = (char *)malloc(sizeb);
+        char *C = (char *)malloc(num);
 
-        read(fd_named, C, sizeb);
+        read(fd_named, C, num);
 
         end = clock();
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
