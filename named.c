@@ -11,8 +11,6 @@
 #include <time.h>
 #include <termios.h>
 
-#define MAX_SIZE 25000000
-
 float seconds = 0.0;
 
 int main(int argc, char *argv[])
@@ -72,7 +70,8 @@ int main(int argc, char *argv[])
 
         //printf("Start");
 
-        int P[sizea];
+        //char P[sizea];
+        char *P = (char *)malloc(sizea);
 
         for (int i = 0; i < sizea; i++)
         {
@@ -84,31 +83,27 @@ int main(int argc, char *argv[])
 
         // Stores time seconds
 
-        for (int i = 0; i < sizea; i++)
-        {
-
-            write(fd_named, &P[i], sizeof(P[i]));
-        }
+        write(fd_named, P, sizea);
+        free(P);
     }
 
-    //printf("End");
-
-    fd_named = open("/tmp/named", O_RDONLY);
-
-    int C[sizeb];
-
-    for (int i = 0; i < sizeb; i++)
+    else
     {
+        //printf("End");
 
-        read(fd_named, &C[i], sizeof(C[i]));
+        fd_named = open("/tmp/named", O_RDONLY);
+
+        //char C[sizeb];
+        char *C = (char *)malloc(sizeb);
+
+        read(fd_named, C, sizeb);
+
+        end = clock();
+        float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        printf("Time of execution : %f\n", seconds);
+
+        close(fd_named);
+        free(C);
+        return 0;
     }
-
-    end = clock();
-    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-    printf("Time of execution : %f\n", seconds);
-
-    close(fd_named);
-    //wait(NULL);
-
-    return 0;
 }
