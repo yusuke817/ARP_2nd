@@ -19,24 +19,44 @@ int main(int argc, char *argv[])
 {
 
     int fd_named;
-    time_t start;
-    time_t end;
+    int sizea = 0;
+    int sizeb = 0;
+    clock_t start;
+    clock_t end;
 
     mkfifo("/tmp/named", 0666);
+    printf("Please input the size of producer buffer\n");
 
-    printf("Please input the number of elements of the array\n");
+    scanf("%d", &sizea);
 
-    int num;
+    printf("Please input the size of consumer buffer\nwhich should be smaller than the size of producer buffer\n");
 
-    scanf("%d", &num);
+    scanf("%d", &sizeb);
 
-    if (num > MAX_SIZE)
+    if (sizea > 100000000 || sizeb > 100000000)
     {
 
-        printf("You can input less than 1250000\n");
+        printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
+        exit(-1);
+    }
+
+    if (sizea < 1 || sizeb < 1)
+    {
+
+        printf("ENTER positive values\n");
+        exit(-1);
+    }
+
+    if (sizeb > sizea)
+    {
+
+        printf("the size of consumer buffer should be equal or smaller than the size of producer buffer\n");
+        exit(-1);
     }
 
     int id = fork();
+
+    //printf("Start");
 
     if (id == -1)
     {
@@ -50,11 +70,11 @@ int main(int argc, char *argv[])
     if (id == 0)
     {
 
-        printf("Start");
+        //printf("Start");
 
-        int P[num];
+        int P[sizea];
 
-        for (int i = 0; i < num; i++)
+        for (int i = 0; i < sizea; i++)
         {
 
             P[i] = 1 + rand() % 1000;
@@ -64,20 +84,20 @@ int main(int argc, char *argv[])
 
         // Stores time seconds
 
-        for (int i = 0; i < num; i++)
+        for (int i = 0; i < sizea; i++)
         {
 
             write(fd_named, &P[i], sizeof(P[i]));
         }
     }
 
-    printf("End");
+    //printf("End");
 
     fd_named = open("/tmp/named", O_RDONLY);
 
-    int C[num];
+    int C[sizeb];
 
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < sizeb; i++)
     {
 
         read(fd_named, &C[i], sizeof(C[i]));
