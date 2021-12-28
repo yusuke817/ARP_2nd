@@ -9,22 +9,22 @@ do
         "unnamed pipe")
             echo "you chose unnamed pipe"
             #cd sources/unnamed
-            ./sources/unnamed/unnamed
+            ./exec/sources/unnamed/unnamed
             ;;
         "named pipe")
             echo "you chose named pipe"
             #cd sources/named
-            ./sources/named/named
+            ./exec/sources/named/named
             ;;
         "socket")
             echo "you chose socket"
             #cd sources/socket
-            ./sources/socket/socket
+            ./exec/sources/socket/socket
             ;;
         "shared memory")
             echo "you chose shared memory"
             #cd sources/shared
-            ./sources/shared/shared
+            ./exec/sources/shared/shared
             ;;
         "Quit")
             break
