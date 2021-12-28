@@ -26,45 +26,42 @@ int main(int argc, char* argv[]){
 
     int num=10;
     int sizea = 0;
-    int sizeb = 0;
+    //int sizeb = 0;
     int sizecb = 0;
     int i;
+    //int a =0;
     int shmid;
     
     clock_t start;
     clock_t end;
 
-    printf("Please input the size of producer buffer\n");
+    printf("Please input the bytes of transmitted data\n");
 
     scanf("%d", & sizea);
-
-    printf("Please input the size of consumer buffer\nwhich should be smaller than the size of producer buffer\n");
-
-    scanf("%d", & sizeb);
 
     printf("Please input the size of circular buffer\nwhich should be equal or smaller than the size of other two buffers\n");
 
     scanf("%d", & sizecb);
 
-     if (sizea > 100000000 || sizeb > 100000000 || sizecb > 100000000 ){
+     if (sizea > 100000000 ||sizecb > 100000000 ){
 
          printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
          exit(-1);
      }
 
-     if (sizea < 1 || sizeb < 1 || sizecb < 1){
+     if (sizea < 1 || sizecb < 1){
 
          printf("ENTER positive values\n");
          exit(-1);
      }
 
-     if (sizeb > sizea){
+    //  if (sizeb > sizea){
 
-         printf("the size of consumer buffer should be equal or smaller than the size of producer buffer\n");
-         exit(-1);
-     }
+    //      printf("the size of consumer buffer should be equal or smaller than the size of producer buffer\n");
+    //      exit(-1);
+    //  }
 
-     if (sizecb > sizea || sizecb > sizeb){
+     if (sizecb > sizea){
 
          printf("sizecb should be smaller than the size of other two buffers\n");
          exit(-1);
@@ -113,11 +110,16 @@ int main(int argc, char* argv[]){
     }
         start = clock();
 
+        
+
+    //for (int d=0; d<)
+
     if (id != 0){
 
         /* this is the producer process */
 
         int p = 0;
+
         //char *data_a = (char *)malloc(sizea);
         char data_a[sizea];
 
@@ -156,19 +158,19 @@ int main(int argc, char* argv[]){
 
 	    shmid = shmget(key, sizeof(ptr->data_cb), IPC_CREAT | 0666);
 
-        //char *data_b = (char *)malloc(sizeb);
-        char data_b[sizeb];
+        //char *data_b = (char *)malloc(sizea);
+        char data_b[sizea];
         int pos = 0;
         
         int c=0;
 
-        while (c < sizeb/sizecb){
+        while (c < sizea/sizecb){
 
             sem_wait(&ptr->full);
 
             for(int j=0; j<sizecb; j++){
 
-                if(sizeb < pos){
+                if(sizea < pos){
                     int h =ptr->data_cb[j];
                     data_b[pos++]=h; 
                 }
