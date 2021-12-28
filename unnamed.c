@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    printf("Please input the number of elements of the array\n");
+    printf("Please input the bytes of transmitted data\n");
 
     int num;
 
