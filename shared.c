@@ -118,6 +118,7 @@ int main(int argc, char* argv[]){
         /* this is the producer process */
 
         int p = 0;
+        //char *data_a = (char *)malloc(sizea);
         char data_a[sizea];
 
         for(int j=0; j<sizea; j++){
@@ -140,6 +141,7 @@ int main(int argc, char* argv[]){
             }            
 
             p++;
+            //free(data_a);
 
             sem_post(&ptr->full);
         }
@@ -153,6 +155,8 @@ int main(int argc, char* argv[]){
 	    /* shmid is the id of the shared memory address for our buffer */
 
 	    shmid = shmget(key, sizeof(ptr->data_cb), IPC_CREAT | 0666);
+
+        //char *data_b = (char *)malloc(sizeb);
         char data_b[sizeb];
         int pos = 0;
         
@@ -176,7 +180,7 @@ int main(int argc, char* argv[]){
             }            
 
             c++;
-
+            //free(data_b);
             sem_post(&ptr->empty);
         }
         
