@@ -73,11 +73,11 @@ int main(int argc, char *argv[])
         //char P[sizea];
         char *P = (char *)malloc(sizea);
 
-        for (int i = 0; i < sizea; i++)
-        {
+        //for (int i = 0; i < sizea; i++)
+        //{
 
-            P[i] = 1 + rand() % 1000;
-        }
+        //P[i] = 1 + rand() % 1000;
+        //}
 
         fd_named = open("/tmp/named", O_WRONLY);
 
