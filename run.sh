@@ -1,5 +1,5 @@
 #!/bin/bash
-cd $envvar
+#cd $envvar
 
 PS3='Please enter your choice: '
 options=("unnamed pipe" "named pipe" "socket" "shared memory" "Quit")
@@ -8,23 +8,23 @@ do
     case $opt in
         "unnamed pipe")
             echo "you chose unnamed pipe"
-            cd sources/unnamed
-            ./unnamed
+            #cd sources/unnamed
+            ./sources/unnamed/unnamed
             ;;
         "named pipe")
             echo "you chose named pipe"
-            cd sources/named
-            ./named
+            #cd sources/named
+            ./sources/named/named
             ;;
         "socket")
             echo "you chose socket"
-            cd sources/socket
-            ./socket
+            #cd sources/socket
+            ./sources/socket/socket
             ;;
         "shared memory")
             echo "you chose shared memory"
-            cd sources/shared
-            ./shared
+            #cd sources/shared
+            ./sources/shared/shared
             ;;
         "Quit")
             break
