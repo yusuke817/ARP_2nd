@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    //printf("End");
+    printf("End");
 
     fd_named = open("/tmp/named", O_RDONLY);
 
