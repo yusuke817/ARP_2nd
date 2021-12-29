@@ -185,13 +185,18 @@ int main(int argc, char *argv[])
         bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
         serv_addr.sin_port = htons(portno);
 
-
+        // The connect function is called by the client to build a connection to the server. It has three arguments:
+        // the socket file descriptor, the address of the host to be connected with the port number and the size of this address. 
+	// This function returns 0 when it successes and -1 when it fails.
         if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
             error("ERROR connecting");
-
-        end = clock();
+	    
+        //stop-watch finishes
+        end = clock(); 
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+	//printimg the calculation time   	    
         printf("Time of execution : %f\n", seconds);
+	//release the momory occupied with malloc    
         free(buffer);
     }
 	
