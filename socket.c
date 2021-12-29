@@ -27,6 +27,10 @@ int main(int argc, char *argv[])
     //initialize each file descriptors
     int fd_w;
     int fd_r;
+    //sockfd is a file descriptor which includes the values returned by socket system call
+    //newsockfd is a file descriptor which includes the values returned by accept system call
+    //portno receives the port number to connect the server
+    //clilen receives the size of the address of the client
     int sockfd;
     int newsockfd;
     int portno;
