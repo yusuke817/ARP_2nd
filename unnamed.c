@@ -17,6 +17,7 @@ static int received = 0;
 void sig_handler(int sig)
 {
     received = 1;
+    return;
 }
 
 int main(int argc, char *argv[])
@@ -80,15 +81,17 @@ int main(int argc, char *argv[])
             P[j] = 1 + rand() % 100;
         }
 
-        for (int k = 0; k < (num / 10000) + 1; k++)
+        for (int k = 0; k < (num / 10000); k++)
         {
             //writing the data for the consumer
-            write(u[1], P + (k * 10000), 10000);
-            while (received == 0)
-            {
-                ;
-            }
-            received = 0;
+            //write(u[1], P + (k * 10000), 10000);
+            write(u[1], P + (k * 10000), 100);
+
+            // while (received == 0)
+            // {
+            //     ;
+            // }
+            //received = 0;
         }
 
         //printf("last : %d\n", P[num - 1]);
@@ -107,11 +110,12 @@ int main(int argc, char *argv[])
         //reading the data from the producer
         int error;
 
-        for (int k = 0; k < (num / 10000) + 1; k++)
+        for (int k = 0; k < (num / 10000); k++)
         {
             //writing the data for the consumer
             read(u[0], C + (k * 10000), 10000);
-            kill(id, SIGUSR1);
+            error = kill(id, SIGUSR1);
+            printf("dd, %d", error);
         }
 
         //error = read(u[0], C, num);
