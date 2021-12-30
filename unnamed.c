@@ -13,9 +13,6 @@
 
 int main(int argc, char *argv[])
 {
-    // Initialize the file descriptor
-    int fd_w;
-    int fd_r;
     // set the clock
     time_t start;
     time_t end;
@@ -62,43 +59,49 @@ int main(int argc, char *argv[])
 
     if (id != 0)
     {
+        close(u[0]);
         //child process plays a role of producer P
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *P = (char *)malloc(num);
-        //open the pipe for writing the data
-        fd_w = open(argv[1], O_WRONLY);
-        write(fd_w, &start, sizeof(start));
+
+        for (int j = 0; j < num; j++)
+        {
+            P[j] = 1 + rand() % 100;
+        }
+
         //writing the data for the consumer
         write(u[1], P, num);
+        //printf("last : %d\n", P[num - 1]);
+
         //release the momory occupied with malloc
         free(P);
+        //close(u[1]);
     }
 
     else
     {
         //parent process plays a role of consumer C
-        //open the pipe for readng the data
-        fd_r = open(argv[2], O_RDONLY);
+        close(u[1]);
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *C = (char *)malloc(num);
         //reading the data from the producer
+        int error;
         read(u[0], C, num);
+        //error = read(u[0], C, num);
+        printf("e %d", error);
         //stop-watch finishes
         end = clock();
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
         //printimg the calculation time
+        //printf("last : %d\n", C[num - 1]);
         printf("Time of execution : %f\n", seconds);
 
-        write(fd_r, &end, sizeof(end));
+        //write(fd_r, &end, sizeof(end));
         //release the momory occupied with malloc
         free(C);
+        //wait(NULL);
+        //close(u[0]);
     }
-    //close the pipe
-    close(fd_w);
-    close(fd_r);
-
-    close(u[0]);
-    close(u[1]);
 
     //wait(NULL);
 
