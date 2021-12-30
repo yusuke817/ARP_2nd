@@ -8,23 +8,23 @@ do
     case $opt in
         "unnamed pipe")
             echo "you chose unnamed pipe"
-            #cd sources/unnamed
             ./exec/sources/unnamed/unnamed
+            sleep 3
             ;;
         "named pipe")
             echo "you chose named pipe"
-            #cd sources/named
             ./exec/sources/named/named
+            sleep 3
             ;;
         "socket")
             echo "you chose socket"
-            #cd sources/socket
             ./exec/sources/socket/socket
+            sleep 3
             ;;
         "shared memory")
             echo "you chose shared memory"
-            #cd sources/shared
             ./exec/sources/shared/shared
+            sleep 3
             ;;
         "Quit")
             break
