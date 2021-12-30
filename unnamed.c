@@ -13,12 +13,12 @@
 #include <semaphore.h>
 
 static int received = 0;
+int chunk = 8000;
 
-void sig_handler(int sig)
-{
-    received = 1;
-    return;
-}
+// void sig_handler(int sig)
+// {
+//     received = 1;
+// }
 
 int main(int argc, char *argv[])
 {
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         //child process plays a role of producer P
         close(u[0]);
 
-        signal(SIGUSR1, sig_handler);
+        // signal(SIGUSR1, sig_handler);
 
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *P = (char *)malloc(num);
@@ -80,21 +80,21 @@ int main(int argc, char *argv[])
         {
             P[j] = 1 + rand() % 100;
         }
+        //printf("last : %d\n", P[100]);
 
-        for (int k = 0; k < (num / 10000); k++)
+        for (int k = 0; k < (num / chunk); k++)
+        //for (int k = 0; k < num; k++)
         {
             //writing the data for the consumer
-            //write(u[1], P + (k * 10000), 10000);
-            write(u[1], P + (k * 10000), 100);
+            write(u[1], P + (k * chunk), chunk);
+            //write(u[1], P + (k * 10000), 100);
 
-            // while (received == 0)
-            // {
-            //     ;
-            // }
-            //received = 0;
+            //     while (received == 0)
+            //     {
+            //         ;
+            //     }
+            //     received = 0;
         }
-
-        //printf("last : %d\n", P[num - 1]);
 
         //release the momory occupied with malloc
         free(P);
@@ -110,12 +110,13 @@ int main(int argc, char *argv[])
         //reading the data from the producer
         int error;
 
-        for (int k = 0; k < (num / 10000); k++)
+        for (int k = 0; k < (num / chunk); k++)
         {
             //writing the data for the consumer
-            read(u[0], C + (k * 10000), 10000);
-            error = kill(id, SIGUSR1);
-            printf("dd, %d", error);
+            read(u[0], C + (k * chunk), chunk);
+            // kill(id, SIGUSR1);
+            //error = kill(id, SIGUSR1);
+            //printf("dd, %d", error);
         }
 
         //error = read(u[0], C, num);
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
         end = clock();
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
         //printimg the calculation time
-        //printf("last : %d\n", C[num - 1]);
+        // printf("last : %d\n", C[100]);
         printf("Time of execution : %f\n", seconds);
 
         //write(fd_r, &end, sizeof(end));
