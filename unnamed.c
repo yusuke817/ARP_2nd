@@ -10,6 +10,14 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <termios.h>
+#include <semaphore.h>
+
+static int received = 0;
+
+void sig_handler(int sig)
+{
+    received = 1;
+}
 
 int main(int argc, char *argv[])
 {
@@ -46,7 +54,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
     // with fork(), the consumer and the producer are not separated into 2 parts
-    int id = fork();
+    pid_t id = fork();
 
     if (id == -1)
     {
@@ -59,8 +67,11 @@ int main(int argc, char *argv[])
 
     if (id != 0)
     {
-        close(u[0]);
         //child process plays a role of producer P
+        close(u[0]);
+
+        signal(SIGUSR1, sig_handler);
+
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *P = (char *)malloc(num);
 
@@ -69,13 +80,22 @@ int main(int argc, char *argv[])
             P[j] = 1 + rand() % 100;
         }
 
-        //writing the data for the consumer
-        write(u[1], P, num);
+        for (int k = 0; k < (num / 10000) + 1; k++)
+        {
+            //writing the data for the consumer
+            write(u[1], P + (k * 10000), 10000);
+            while (received == 0)
+            {
+                ;
+            }
+            received = 0;
+        }
+
         //printf("last : %d\n", P[num - 1]);
 
         //release the momory occupied with malloc
         free(P);
-        //close(u[1]);
+        close(u[1]);
     }
 
     else
@@ -86,9 +106,16 @@ int main(int argc, char *argv[])
         char *C = (char *)malloc(num);
         //reading the data from the producer
         int error;
-        read(u[0], C, num);
+
+        for (int k = 0; k < (num / 10000) + 1; k++)
+        {
+            //writing the data for the consumer
+            read(u[0], C + (k * 10000), 10000);
+            kill(id, SIGUSR1);
+        }
+
         //error = read(u[0], C, num);
-        printf("e %d", error);
+        //printf("e %d", error);
         //stop-watch finishes
         end = clock();
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
@@ -100,7 +127,7 @@ int main(int argc, char *argv[])
         //release the momory occupied with malloc
         free(C);
         //wait(NULL);
-        //close(u[0]);
+        close(u[0]);
     }
 
     //wait(NULL);
