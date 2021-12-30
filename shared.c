@@ -27,23 +27,25 @@ int main(int argc, char *argv[])
 
     int num = 10;
     int sizea = 0;
-    //int sizeb = 0;
     int sizecb = 0;
     int i;
-    //int a =0;
     int shmid;
 
+    // set the clock
     clock_t start;
     clock_t end;
 
+    // user can decide the bytes of the data
     printf("Please input the bytes of transmitted data\n");
 
     scanf("%d", &sizea);
 
-    printf("Please input the size of circular buffer\nwhich should be equal or smaller than the size of other two buffers\n");
+    // user can decide the size of circular buffer
+    printf("Please input the size of circular buffer which should be equal or smaller than the bytes of transmitted data\n");
 
     scanf("%d", &sizecb);
 
+    // 100mb is maximum size
     if (sizea > 100000000 || sizecb > 100000000)
     {
 
@@ -51,6 +53,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    //the amount of data should be positive
     if (sizea < 1 || sizecb < 1)
     {
 
@@ -58,12 +61,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    //  if (sizeb > sizea){
-
-    //      printf("the size of consumer buffer should be equal or smaller than the size of producer buffer\n");
-    //      exit(-1);
-    //  }
-
+    //circular buffer should be equal or smaller than the size of transmitted data
     if (sizecb > sizea)
     {
 
@@ -71,6 +69,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    //Cestting the struct named Buffer needed for the shared memory.
     typedef struct
     {
 
@@ -87,12 +86,10 @@ int main(int argc, char *argv[])
 
     key_t key = ftok("shmfile", 65);
 
-    /* shmid is the id of the shared memory address for our buffer */
+    /* shmid is the id of the shared memory address for buffer */
     shmid = shmget(IPC_PRIVATE, sizeof(ptr->data_cb), IPC_CREAT | 0666);
 
-    /*shmid = shmget(key, sizeof(ptr->buffer_data), IPC_CREAT | 0666);*/
-
-    /* get a pointer to our buffer in shared memory */
+    /* get a pointer to buffer in shared memory */
 
     ptr = (Buffer *)shmat(shmid, NULL, 0);
 
@@ -101,11 +98,12 @@ int main(int argc, char *argv[])
     ptr->in = 0;
     ptr->out = 0;
 
-    /* initialise our semaphores */
+    /* initialise semaphores */
 
     sem_init(&ptr->empty, 1, sizecb);
     sem_init(&ptr->full, 1, 0);
 
+    // with fork(), the consumer and the producer are not separated into 2 parts
     int id = fork();
 
     if (id == -1)
@@ -114,30 +112,33 @@ int main(int argc, char *argv[])
         printf("Error forking...\n");
         exit(1);
     }
-    start = clock();
 
-    //for (int d=0; d<)
+    //stop-watch begins    
+    start = clock();
 
     if (id != 0)
     {
 
-        /* this is the producer process */
+	    //parent process plays a role of producer P
 
         int p = 0;
 
+        // Dynamic memory which is malloc is used here to accept big amount of data
         char *data_a = (char *)malloc(sizea);
-        //char data_a[sizea];
 
+        // write the random value in data_a array
         for (int j = 0; j < sizea; j++)
         {
             data_a[j] = 1 + rand() % 100;
         }
 
+        // the data in sizea is sent several times which is equal to sizea / sizecb with circular buffer
         while (p < sizea / sizecb)
         {
-
+            //circular buffer in writing
             sem_wait(&ptr->empty);
 
+            // with circular buffer, data is sent
             for (int j = 0; j < sizecb; j++)
             {
                 if (sizea < j + p * sizecb)
@@ -149,7 +150,6 @@ int main(int argc, char *argv[])
                 {
                     ptr->data_cb[j] = 0;
                 }
-                //ptr->in = (ptr->in + 1)%sizecb;
             }
 
             p++;
@@ -157,13 +157,14 @@ int main(int argc, char *argv[])
 
             sem_post(&ptr->full);
         }
+
+	    //release the memory occupied with malloc
         free(data_a);
     }
 
     else
     {
-        //printf("Child starting\n");
-
+	    // child process plays a role of consumer C
         key_t key = ftok("shmfile", 65);
 
         /* shmid is the id of the shared memory address for our buffer */
@@ -171,16 +172,19 @@ int main(int argc, char *argv[])
         shmid = shmget(key, sizeof(ptr->data_cb), IPC_CREAT | 0666);
 
         char *data_b = (char *)malloc(sizea);
-        //char data_b[sizea];
+
         int pos = 0;
 
         int c = 0;
 
+        // the data in sizea is received several times which is equal to sizea / sizecb with circular buffer
         while (c < sizea / sizecb)
         {
 
             sem_wait(&ptr->full);
 
+            // with circular buffer, data is received
+            
             for (int j = 0; j < sizecb; j++)
             {
 
@@ -200,19 +204,24 @@ int main(int argc, char *argv[])
             
             sem_post(&ptr->empty);
         }
-        
+
+	    //release the memory occupied with malloc
         free(data_b);
 
+        //stop-watch finishes
         end = clock();
 
         float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+	    //printimg the calculation time        
         printf("Time of execution : %f\n", seconds);
     }
     printf("stopping");
 
+    //destroy semaphore
     sem_destroy(&ptr->empty);
     sem_destroy(&ptr->full);
 
+    //detach the shared memory and release the memory
     shmdt(&ptr);
     shmctl(shmid, IPC_RMID, NULL);
 
