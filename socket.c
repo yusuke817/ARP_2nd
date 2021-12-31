@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     // the producer cannot send the data at one time when the size of data is too big
     // so with chunk, I developped the program so that producer can send the data separately with small units
     int n, m;
-    int chunk = 1024;
+    int chunk = 102400;
 
     // to measure the wall time which is the time passed in the execution, the structure is set
     struct timespec begin, end;
@@ -94,16 +94,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    //stop-watch for wall time begins
-    clock_gettime(CLOCK_REALTIME, &begin);
-
-    //stop-watch for CPU time begins
-    start = clock();
-
-    if (id != 0)
-    {
-        //parent process plays a role of producer P
-        // Dynamic memory which is malloc is used here to accept big amount of data
+        // Dynamic memory which is malloc is used here to accept big amount of data    
         char *buffer = (char *)malloc(num);
 
         // the array is filled with random data
@@ -111,6 +102,16 @@ int main(int argc, char *argv[])
         {
             buffer[j] = 1 + rand() % 100;
         }
+
+    //stop-watch for wall time begins
+    clock_gettime(CLOCK_REALTIME, &begin);
+            
+    //stop-watch for CPU time begins
+    start = clock();
+
+    if (id != 0)
+    {
+        //parent process plays a role of producer P
 
         // The socket() system call creates a new socket. It takes three arguments: address domain of the socket, the type of socket and protocol.
         // Firstly, AF_INET is the Internet domain for two hosts on the Internet.
@@ -154,6 +155,8 @@ int main(int argc, char *argv[])
         if (newsockfd < 0)
             error("Error on accept");
 
+        //sleep(1);
+
         // Except the end of the data, the data is transmitted in the fixed unit which is "chunk"
         for (int k = 0; k < (num / chunk) - 1; k++)
         {
@@ -167,11 +170,8 @@ int main(int argc, char *argv[])
         // in the end, the rest of the data is transmitted
         n = write(newsockfd, buffer + m, num % chunk);
 
-        printf("division, %i\n", num / chunk);
-        printf("mod, %i\n", num % chunk);
-
+        wait(NULL);
         close(sockfd);
-        printf("close\n");
         free(buffer);
     }
 
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
         // This function returns 0 when it successes and -1 when it fails.
         while (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         {
-            usleep(10);
+            usleep(1);
         }
 
         // Except the end of the data, the data is read in the fixed unit which is "chunk"
@@ -231,16 +231,13 @@ int main(int argc, char *argv[])
         // in the end, the rest of the data is read
         n = read(sockfd, buffer + m, num % chunk);
 
-        printf("division, %i\n", num / chunk);
-        printf("mod, %i\n", num % chunk);
         close(sockfd);
-        printf("close\n");
 
         //stop-watch for wall time finishes
         clock_gettime(CLOCK_REALTIME, &end);
         long seconds = end.tv_sec - begin.tv_sec;
         long nanoseconds = end.tv_nsec - begin.tv_nsec;
-        double elapsed = seconds + nanoseconds * 1e-9;
+        double elapsed = seconds+ nanoseconds * 1e-9;
 
         //stop-watch for wall time finishes
         finish = clock();
