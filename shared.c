@@ -1,107 +1,49 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <signal.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <termios.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/mman.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <semaphore.h>
-#include <fcntl.h>
-#include <sys/uio.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <pthread.h>
 
 int main(int argc, char *argv[])
 {
-
-    int num = 10;
-    int sizea = 0;
-    int sizecb = 0;
-    int i;
-    int shmid;
-
+    // Initialize the file descriptor
+    int fd_named;
+    int n, m;
+    int chunk = 1024;
+    struct timespec begin, end;
     // set the clock
     clock_t start;
-    clock_t end;
-
+    clock_t finish;
+    // create the named pipe
+    mkfifo("/tmp/named", 0666);
     // user can decide the bytes of the data
     printf("Please input the bytes of transmitted data\n");
 
-    scanf("%d", &sizea);
+    int num;
 
-    // user can decide the size of circular buffer
-    printf("Please input the size of circular buffer which should be equal or smaller than the bytes of transmitted data\n");
-
-    scanf("%d", &sizecb);
+    scanf("%d", &num);
 
     // 100mb is maximum size
-    if (sizea > 100000000 || sizecb > 100000000)
+    if (num > 100000000)
     {
 
         printf("ENTER AN AMOUNT OF LESS THAN 100000000 bytes\n");
         exit(-1);
     }
-
     //the amount of data should be positive
-    if (sizea < 1 || sizecb < 1)
+    if (num < 1)
     {
 
         printf("ENTER positive values\n");
         exit(-1);
     }
-
-    //circular buffer should be equal or smaller than the size of transmitted data
-    if (sizecb > sizea)
-    {
-
-        printf("sizecb should be smaller than the size of other two buffers\n");
-        exit(-1);
-    }
-
-    //Cestting the struct named Buffer needed for the shared memory.
-    typedef struct
-    {
-
-        char data_cb[sizecb];
-        int in;
-        int out;
-        sem_t full;
-        sem_t empty;
-        sem_t mutex;
-
-    } Buffer;
-
-    Buffer *ptr;
-
-    key_t key = ftok("shmfile", 65);
-
-    /* shmid is the id of the shared memory address for buffer */
-    shmid = shmget(IPC_PRIVATE, sizeof(ptr->data_cb), IPC_CREAT | 0666);
-
-    /* get a pointer to buffer in shared memory */
-
-    ptr = (Buffer *)shmat(shmid, NULL, 0);
-
-    /* initialise the buffer */
-
-    ptr->in = 0;
-    ptr->out = 0;
-
-    /* initialise semaphores */
-
-    sem_init(&ptr->empty, 1, sizecb);
-    sem_init(&ptr->full, 1, 0);
 
     // with fork(), the consumer and the producer are not separated into 2 parts
     int id = fork();
@@ -109,121 +51,91 @@ int main(int argc, char *argv[])
     if (id == -1)
     {
 
-        printf("Error forking...\n");
+        printf("Error \n");
         exit(1);
     }
 
-    //stop-watch begins    
+    clock_gettime(CLOCK_REALTIME, &begin);
+
+    //stop-watch begins
     start = clock();
 
-    if (id != 0)
+    if (id == 0)
     {
-
-	    //parent process plays a role of producer P
-
-        int p = 0;
-
+        //child process plays a role of producer P
         // Dynamic memory which is malloc is used here to accept big amount of data
-        char *data_a = (char *)malloc(sizea);
+        char *P = (char *)malloc(num);
 
-        // write the random value in data_a array
-        for (int j = 0; j < sizea; j++)
+        for (int j = 0; j < num; j++)
         {
-            data_a[j] = 1 + rand() % 100;
+            P[j] = 1 + rand() % 100;
+        }
+        //printf("last : %d\n", P[100]);
+
+        //open the pipe for writing the data
+        fd_named = open("/tmp/named", O_WRONLY);
+
+        for (int k = 0; k < (num / chunk); k++)
+        //for (int k = 0; k < num; k++)
+        {
+            //writing the data for the consumer
+            n = write(fd_named, P + (k * chunk), chunk);
+            m = (k + 1) * chunk;
+            //write(u[1], P + (k * 10000), 100);
+
+            //     while (received == 0)
+            //     {
+            //         ;
+            //     }
+            //     received = 0;
         }
 
-        // the data in sizea is sent several times which is equal to sizea / sizecb with circular buffer
-        while (p < sizea / sizecb)
-        {
-            //circular buffer in writing
-            sem_wait(&ptr->empty);
+        n = write(fd_named, P + m, num % chunk);
 
-            // with circular buffer, data is sent
-            for (int j = 0; j < sizecb; j++)
-            {
-                if (sizea < j + p * sizecb)
-                {
-                    ptr->data_cb[j] = data_a[j + p * sizecb];
-                }
-
-                else
-                {
-                    ptr->data_cb[j] = 0;
-                }
-            }
-
-            p++;
-            
-
-            sem_post(&ptr->full);
-        }
-
-	    //release the memory occupied with malloc
-        free(data_a);
+        //writing the data for the consumer
+        //write(, P, num);
+        //release the momory occupied with malloc
+        free(P);
     }
 
     else
     {
-	    // child process plays a role of consumer C
-        key_t key = ftok("shmfile", 65);
-
-        /* shmid is the id of the shared memory address for our buffer */
-
-        shmid = shmget(key, sizeof(ptr->data_cb), IPC_CREAT | 0666);
-
-        char *data_b = (char *)malloc(sizea);
-
-        int pos = 0;
-
-        int c = 0;
-
-        // the data in sizea is received several times which is equal to sizea / sizecb with circular buffer
-        while (c < sizea / sizecb)
+        //parent process plays a role of consumer C
+        //open the pipe for readng the data
+        fd_named = open("/tmp/named", O_RDONLY);
+        // Dynamic memory which is malloc is used here to accept big amount of data
+        char *C = (char *)malloc(num);
+        for (int k = 0; k < (num / chunk); k++)
         {
-
-            sem_wait(&ptr->full);
-
-            // with circular buffer, data is received
-            
-            for (int j = 0; j < sizecb; j++)
-            {
-
-                if (sizea < pos)
-                {
-                    int h = ptr->data_cb[j];
-                    data_b[pos++] = h;
-                }
-
-                else
-                {
-                    break;
-                }
-            }
-
-            c++;
-            
-            sem_post(&ptr->empty);
+            //writing the data for the consumer
+            n = read(fd_named, C + (k * chunk), chunk);
+            m = (k + 1) * chunk;
+            // kill(id, SIGUSR1);
+            //error = kill(id, SIGUSR1);
+            //printf("dd, %d", error);
         }
-
-	    //release the memory occupied with malloc
-        free(data_b);
-
+        n = read(fd_named, C + m, num % chunk);
+        //error = read(u[0], C, num);
+        //printf("e %d", error);
         //stop-watch finishes
-        end = clock();
+        clock_gettime(CLOCK_REALTIME, &end);
+        long seconds = end.tv_sec - begin.tv_sec;
+        long nanoseconds = end.tv_nsec - begin.tv_nsec;
+        double elapsed = seconds + nanoseconds * 1e-9;
+        //stop-watch finishes
+        finish = clock();
+        printf("Time of execution : %.5f\n", elapsed);
 
-        float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-	    //printimg the calculation time        
-        printf("Time of execution : %f\n", seconds);
+        //reading the data from the producer
+        //stop-watch finishes
+        //end = clock();
+        //float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        //printimg the calculation time
+        //printf("Time of execution : %f\n", seconds);
+        //close the pipe
+        close(fd_named);
+        //release the momory occupied with malloc
+        free(C);
+        return 0;
     }
-    printf("stopping");
-
-    //destroy semaphore
-    sem_destroy(&ptr->empty);
-    sem_destroy(&ptr->full);
-
-    //detach the shared memory and release the memory
-    shmdt(&ptr);
-    shmctl(shmid, IPC_RMID, NULL);
-
-    return 0;
 }
