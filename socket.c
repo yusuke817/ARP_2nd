@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     //initialize each file descriptors
     int fd_w;
     int fd_r;
+
     //sockfd is a file descriptor which includes the values returned by socket system call
     //newsockfd is a file descriptor which includes the values returned by accept system call
     //portno receives the port number to connect the server
@@ -35,9 +36,18 @@ int main(int argc, char *argv[])
     int newsockfd;
     int portno;
     int clilen;
+
+    // the producer cannot send the data at one time when the size of data is too big
+    // so with chunk, I developped the program so that producer can send the data separately with small units
     int n, m;
     int chunk = 1024;
+
+    // to measure the wall time which is the time passed in the execution, the structure is set
     struct timespec begin, end;
+
+    //set the clock for CPU time calculation
+    time_t start;
+    time_t finish;
 
     // A sockaddr_in includes an internet address.
     // The variable serv_addr will include server address, and cli_addr will include client address
@@ -46,10 +56,6 @@ int main(int argc, char *argv[])
 
     // The variable server is a pointer for a structure of type hostent.
     struct hostent *server;
-
-    // set the clock for CPU calculation
-    //time_t start;
-    //time_t end;
 
     // user can decide the bytes of the data
     printf("Please input the number of elements of the array\n");
@@ -87,10 +93,12 @@ int main(int argc, char *argv[])
         printf("Error forking...\n");
         exit(1);
     }
-    //stop-watch begins
+
+    //stop-watch for wall time begins
     clock_gettime(CLOCK_REALTIME, &begin);
-    //time(&start);
-    //start = clock();
+
+    //stop-watch for CPU time begins
+    start = clock();
 
     if (id != 0)
     {
@@ -98,14 +106,11 @@ int main(int argc, char *argv[])
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *buffer = (char *)malloc(num);
 
+        // the array is filled with random data
         for (int j = 0; j < num; j++)
         {
             buffer[j] = 1 + rand() % 100;
         }
-
-        // double **array1 = malloc(nrows * sizeof(double *));
-        // for(i = 0; i < nrows; i++)
-        // array1[i] = malloc(ncolumns * sizeof(double));
 
         // The socket() system call creates a new socket. It takes three arguments: address domain of the socket, the type of socket and protocol.
         // Firstly, AF_INET is the Internet domain for two hosts on the Internet.
@@ -149,27 +154,19 @@ int main(int argc, char *argv[])
         if (newsockfd < 0)
             error("Error on accept");
 
+        // Except the end of the data, the data is transmitted in the fixed unit which is "chunk"
         for (int k = 0; k < (num / chunk) - 1; k++)
-        //for (int k = 0; k < num; k++)
         {
             //writing the data for the consumer
             n = write(newsockfd, buffer + (k * chunk), chunk);
             m = (k + 1) * chunk;
             if (n < 0)
                 error("ERROR writing to socket");
-
-            //write(u[1], P + (k * 10000), 100);
-
-            //     while (received == 0)
-            //     {
-            //         ;
-            //     }
-            //     received = 0;
         }
 
+        // in the end, the rest of the data is transmitted
         n = write(newsockfd, buffer + m, num % chunk);
 
-        //n = write(newsockfd, "I got your message", chunk);
         close(sockfd);
         free(buffer);
     }
@@ -191,7 +188,6 @@ int main(int argc, char *argv[])
 
         portno = 8080;
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        printf("socket\n");
 
         if (sockfd < 0)
             error("ERROR opening socket");
@@ -219,29 +215,34 @@ int main(int argc, char *argv[])
             usleep(10);
         }
 
-        // while(n<num{
+        // Except the end of the data, the data is read in the fixed unit which is "chunk"
         for (int k = 0; k < (num / chunk) - 1; k++)
-        //for (int k = 0; k < num; k++)
         {
             n = read(sockfd, buffer + (k * chunk), chunk);
             m = (k + 1) * chunk;
             if (n < 0)
                 error("ERROR reading from socket");
         }
+
+        // in the end, the rest of the data is read
         n = read(sockfd, buffer + m, num % chunk);
 
         close(sockfd);
-        //stop-watch finishes
+
+        //stop-watch for wall time finishes
         clock_gettime(CLOCK_REALTIME, &end);
         long seconds = end.tv_sec - begin.tv_sec;
         long nanoseconds = end.tv_nsec - begin.tv_nsec;
         double elapsed = seconds + nanoseconds * 1e-9;
-        //time(&end);
-        //end = clock();
-        //time_t seconds = end - start;
-        //float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+
+        //stop-watch for wall time finishes
+        finish = clock();
+        float cpu_seconds = (float)(finish - start) / CLOCKS_PER_SEC;
+
         //printimg the calculation time
-        printf("Time of execution : %.5f\n", elapsed);
+        printf("wall (passed) time in execution : %.5f\n", elapsed);
+        printf("cpu time: %f\n", cpu_seconds);
+
         //release the momory occupied with malloc
         free(buffer);
     }
