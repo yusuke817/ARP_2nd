@@ -167,7 +167,11 @@ int main(int argc, char *argv[])
         // in the end, the rest of the data is transmitted
         n = write(newsockfd, buffer + m, num % chunk);
 
+        printf("division, %i\n", num / chunk);
+        printf("mod, %i\n", num % chunk);
+
         close(sockfd);
+        printf("close\n");
         free(buffer);
     }
 
@@ -227,7 +231,10 @@ int main(int argc, char *argv[])
         // in the end, the rest of the data is read
         n = read(sockfd, buffer + m, num % chunk);
 
+        printf("division, %i\n", num / chunk);
+        printf("mod, %i\n", num % chunk);
         close(sockfd);
+        printf("close\n");
 
         //stop-watch for wall time finishes
         clock_gettime(CLOCK_REALTIME, &end);
