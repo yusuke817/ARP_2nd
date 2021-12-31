@@ -15,12 +15,19 @@ int main(int argc, char *argv[])
 {
     // Initialize the file descriptor
     int fd_named;
+
+    // the producer cannot send the data at one time when the size of data is too big
+    // so with chunk, I developped the program so that producer can send the data separately with small units
     int n, m;
     int chunk = 1024;
+
+    // to measure the wall time which is the time passed in the execution, the structure is set
     struct timespec begin, end;
-    // set the clock
-    clock_t start;
-    clock_t finish;
+
+    //set the clock for CPU time calculation
+    time_t start;
+    time_t finish;
+
     // create the named pipe
     mkfifo("/tmp/named", 0666);
     // user can decide the bytes of the data
@@ -55,9 +62,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //stop-watch for wall time begins
     clock_gettime(CLOCK_REALTIME, &begin);
 
-    //stop-watch begins
+    //stop-watch for CPU time begins
     start = clock();
 
     if (id == 0)
@@ -66,34 +74,26 @@ int main(int argc, char *argv[])
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *P = (char *)malloc(num);
 
+        // the array is filled with random data
         for (int j = 0; j < num; j++)
         {
             P[j] = 1 + rand() % 100;
         }
-        //printf("last : %d\n", P[100]);
 
         //open the pipe for writing the data
         fd_named = open("/tmp/named", O_WRONLY);
 
+        // Except the end of the data, the data is transmitted in the fixed unit which is "chunk"
         for (int k = 0; k < (num / chunk); k++)
-        //for (int k = 0; k < num; k++)
         {
             //writing the data for the consumer
             n = write(fd_named, P + (k * chunk), chunk);
             m = (k + 1) * chunk;
-            //write(u[1], P + (k * 10000), 100);
-
-            //     while (received == 0)
-            //     {
-            //         ;
-            //     }
-            //     received = 0;
         }
 
+        // in the end, the rest of the data is transmitted
         n = write(fd_named, P + m, num % chunk);
 
-        //writing the data for the consumer
-        //write(, P, num);
         //release the momory occupied with malloc
         free(P);
     }
@@ -105,33 +105,32 @@ int main(int argc, char *argv[])
         fd_named = open("/tmp/named", O_RDONLY);
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *C = (char *)malloc(num);
+
+        // Except the end of the data, the data is read in the fixed unit which is "chunk"
         for (int k = 0; k < (num / chunk); k++)
         {
             //writing the data for the consumer
             n = read(fd_named, C + (k * chunk), chunk);
             m = (k + 1) * chunk;
-            // kill(id, SIGUSR1);
-            //error = kill(id, SIGUSR1);
-            //printf("dd, %d", error);
         }
+
+        // in the end, the rest of the data is read
         n = read(fd_named, C + m, num % chunk);
-        //error = read(u[0], C, num);
-        //printf("e %d", error);
-        //stop-watch finishes
+
+        //stop-watch for wall time finishes
         clock_gettime(CLOCK_REALTIME, &end);
         long seconds = end.tv_sec - begin.tv_sec;
         long nanoseconds = end.tv_nsec - begin.tv_nsec;
         double elapsed = seconds + nanoseconds * 1e-9;
-        //stop-watch finishes
-        finish = clock();
-        printf("Time of execution : %.5f\n", elapsed);
 
-        //reading the data from the producer
-        //stop-watch finishes
-        //end = clock();
-        //float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        //stop-watch for wall time finishes
+        finish = clock();
+        float cpu_seconds = (float)(finish - start) / CLOCKS_PER_SEC;
+
         //printimg the calculation time
-        //printf("Time of execution : %f\n", seconds);
+        printf("wall (passed) time in execution : %.5f\n", elapsed);
+        printf("cpu time: %f\n", cpu_seconds);
+
         //close the pipe
         close(fd_named);
         //release the momory occupied with malloc
