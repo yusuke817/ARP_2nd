@@ -15,7 +15,7 @@
 // the producer cannot send the data at one time when the size of data is too big
 // so with chunk, I developped the program so that producer can send the data separately with small units
 int n, m;
-int chunk = 1024;
+int chunk = 102400;
 
 // to measure the wall time which is the time passed in the execution, the structure is set
 struct timespec begin, end;
