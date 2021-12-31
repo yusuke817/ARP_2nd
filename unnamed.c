@@ -13,8 +13,9 @@
 #include <semaphore.h>
 
 static int received = 0;
-int chunk = 8000;
-
+int n, m;
+int chunk = 1024;
+struct timespec begin, end;
 // void sig_handler(int sig)
 // {
 //     received = 1;
@@ -24,7 +25,7 @@ int main(int argc, char *argv[])
 {
     // set the clock
     time_t start;
-    time_t end;
+    time_t finish;
     //for pipes to put the file descriptors, two arrays are needed
     //one process can write the data with one array
     //the other process can read the data with the other array
@@ -63,8 +64,12 @@ int main(int argc, char *argv[])
         printf("Error \n");
         exit(1);
     }
+
     //stop-watch begins
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &begin);
+
+    //stop-watch begins
+    //start = clock();
 
     if (id != 0)
     {
@@ -86,7 +91,8 @@ int main(int argc, char *argv[])
         //for (int k = 0; k < num; k++)
         {
             //writing the data for the consumer
-            write(u[1], P + (k * chunk), chunk);
+            n = write(u[1], P + (k * chunk), chunk);
+            m = (k + 1) * chunk;
             //write(u[1], P + (k * 10000), 100);
 
             //     while (received == 0)
@@ -95,6 +101,8 @@ int main(int argc, char *argv[])
             //     }
             //     received = 0;
         }
+
+        n = write(u[1], P + m, num % chunk);
 
         //release the momory occupied with malloc
         free(P);
@@ -113,20 +121,27 @@ int main(int argc, char *argv[])
         for (int k = 0; k < (num / chunk); k++)
         {
             //writing the data for the consumer
-            read(u[0], C + (k * chunk), chunk);
+            n = read(u[0], C + (k * chunk), chunk);
+            m = (k + 1) * chunk;
             // kill(id, SIGUSR1);
             //error = kill(id, SIGUSR1);
             //printf("dd, %d", error);
         }
-
+        n = read(u[0], C + m, num % chunk);
         //error = read(u[0], C, num);
         //printf("e %d", error);
         //stop-watch finishes
-        end = clock();
-        float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        clock_gettime(CLOCK_REALTIME, &end);
+        long seconds = end.tv_sec - begin.tv_sec;
+        long nanoseconds = end.tv_nsec - begin.tv_nsec;
+        double elapsed = seconds + nanoseconds * 1e-9;
+        //stop-watch finishes
+        finish = clock();
+        printf("Time of execution : %.5f\n", elapsed);
+        //float seconds = (float)(finish - start) / CLOCKS_PER_SEC;
         //printimg the calculation time
         // printf("last : %d\n", C[100]);
-        printf("Time of execution : %f\n", seconds);
+        //printf("Time of execution : %f\n", seconds);
 
         //write(fd_r, &end, sizeof(end));
         //release the momory occupied with malloc
