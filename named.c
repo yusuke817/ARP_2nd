@@ -15,9 +15,12 @@ int main(int argc, char *argv[])
 {
     // Initialize the file descriptor
     int fd_named;
+    int n, m;
+    int chunk = 1024;
+    struct timespec begin, end;
     // set the clock
     clock_t start;
-    clock_t end;
+    clock_t finish;
     // create the named pipe
     mkfifo("/tmp/named", 0666);
     // user can decide the bytes of the data
@@ -52,6 +55,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    clock_gettime(CLOCK_REALTIME, &begin);
+
     //stop-watch begins
     start = clock();
 
@@ -60,10 +65,35 @@ int main(int argc, char *argv[])
         //child process plays a role of producer P
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *P = (char *)malloc(num);
+
+        for (int j = 0; j < num; j++)
+        {
+            P[j] = 1 + rand() % 100;
+        }
+        //printf("last : %d\n", P[100]);
+
         //open the pipe for writing the data
         fd_named = open("/tmp/named", O_WRONLY);
+
+        for (int k = 0; k < (num / chunk); k++)
+        //for (int k = 0; k < num; k++)
+        {
+            //writing the data for the consumer
+            n = write(fd_named, P + (k * chunk), chunk);
+            m = (k + 1) * chunk;
+            //write(u[1], P + (k * 10000), 100);
+
+            //     while (received == 0)
+            //     {
+            //         ;
+            //     }
+            //     received = 0;
+        }
+
+        n = write(fd_named, P + m, num % chunk);
+
         //writing the data for the consumer
-        write(fd_named, P, num);
+        //write(, P, num);
         //release the momory occupied with malloc
         free(P);
     }
@@ -75,13 +105,33 @@ int main(int argc, char *argv[])
         fd_named = open("/tmp/named", O_RDONLY);
         // Dynamic memory which is malloc is used here to accept big amount of data
         char *C = (char *)malloc(num);
-        //reading the data from the producer
-        read(fd_named, C, num);
+        for (int k = 0; k < (num / chunk); k++)
+        {
+            //writing the data for the consumer
+            n = read(fd_named, C + (k * chunk), chunk);
+            m = (k + 1) * chunk;
+            // kill(id, SIGUSR1);
+            //error = kill(id, SIGUSR1);
+            //printf("dd, %d", error);
+        }
+        n = read(fd_named, C + m, num % chunk);
+        //error = read(u[0], C, num);
+        //printf("e %d", error);
         //stop-watch finishes
-        end = clock();
-        float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+        clock_gettime(CLOCK_REALTIME, &end);
+        long seconds = end.tv_sec - begin.tv_sec;
+        long nanoseconds = end.tv_nsec - begin.tv_nsec;
+        double elapsed = seconds + nanoseconds * 1e-9;
+        //stop-watch finishes
+        finish = clock();
+        printf("Time of execution : %.5f\n", elapsed);
+
+        //reading the data from the producer
+        //stop-watch finishes
+        //end = clock();
+        //float seconds = (float)(end - start) / CLOCKS_PER_SEC;
         //printimg the calculation time
-        printf("Time of execution : %f\n", seconds);
+        //printf("Time of execution : %f\n", seconds);
         //close the pipe
         close(fd_named);
         //release the momory occupied with malloc
