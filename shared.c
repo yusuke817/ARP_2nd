@@ -30,11 +30,13 @@ int main(int argc, char *argv[])
     int sizecb = 0;
     int i;
     int shmid;
+
+    // to measure the wall time which is the time passed in the execution, the structure is set
     struct timespec begin, end;
 
-    // set the clock
-    //clock_t start;
-    //clock_t end;
+    //set the clock for CPU time calculation
+    time_t start;
+    time_t finish;
 
     // user can decide the bytes of the data
     printf("Please input the bytes of transmitted data\n");
@@ -70,7 +72,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    //Cestting the struct named Buffer needed for the shared memory.
+    //setting the struct named Buffer needed for the shared memory.
     typedef struct
     {
 
@@ -89,7 +91,6 @@ int main(int argc, char *argv[])
 
     /* shmid is the id of the shared memory address for buffer */
     shmid = shmget(key, sizeof(ptr->data_cb), IPC_CREAT | 0666);
-    //shmid = shmget(IPC_PRIVATE, sizeof(ptr->data_cb), IPC_CREAT | 0666);
 
     /* get a pointer to buffer in shared memory */
 
@@ -115,10 +116,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //stop-watch for wall time begins
     clock_gettime(CLOCK_REALTIME, &begin);
 
-    //stop-watch begins
-    //start = clock();
+    //stop-watch for CPU time begins
+    start = clock();
 
     if (id != 0)
     {
@@ -211,22 +213,20 @@ int main(int argc, char *argv[])
         //release the memory occupied with malloc
         free(data_b);
 
+        //stop-watch for wall time finishes
         clock_gettime(CLOCK_REALTIME, &end);
         long seconds = end.tv_sec - begin.tv_sec;
         long nanoseconds = end.tv_nsec - begin.tv_nsec;
         double elapsed = seconds + nanoseconds * 1e-9;
-        //stop-watch finishes
-        //finish = clock();
-        printf("Time of execution : %.5f\n", elapsed);
 
-        //stop-watch finishes
-        //nd = clock();
+        //stop-watch for wall time finishes
+        finish = clock();
+        float cpu_seconds = (float)(finish - start) / CLOCKS_PER_SEC;
 
-        //float seconds = (float)(end - start) / CLOCKS_PER_SEC;
         //printimg the calculation time
-        //printf("Time of execution : %f\n", seconds);
+        printf("wall (passed) time in execution : %.5f\n", elapsed);
+        printf("cpu time: %f\n", cpu_seconds);
     }
-    printf("stopping");
 
     //destroy semaphore
     sem_destroy(&ptr->empty);
